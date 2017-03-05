@@ -126,60 +126,51 @@ function post_ratings_uninstall() {
 
 function post_ratings_templates() {
 	return [[
+		"title" => "forumdisplay_oprating_none",
+		"template" => '<td align="center" class="{$bgcolor}{$thread_type_class}">-</td>'
+	], [
+		"title" => "forumdisplay_oprating",
+		"template" => '<td align="center" class="{$bgcolor}{$thread_type_class} oprating">
+	<img src="{$r[\'image\']}" alt="{$r[\'name\']}" title="{$r[\'name\']}"> x <strong>{$result[\'amount\']}</strong>
+</td>'
+	], [
 		"title" => "postbit_ratings",
 		"template" => '<div class="post_ratings">
-	<div class="post_ratingsresult float_left">
-		{$post[\'ratings_result\']}
-	</div>
-	<div class="post_ratingscontrol float_right">
+    {$post[\'ratings_result\']}
+	<div class="post_ratings_control float_right">
 		{$post[\'ratings_control\']}
 	</div>
 </div>'
 	], [
-		"title" => "postbit_ratingsresult",
-		"template" => '<span class="post_ratingsresult_rating{$compress}" onclick="return RatingList(\'{$pid}\');">
-	{$ratings_result}
-</span>'
-	], [
-		"title" => "postbit_ratingsresult_rating",
-		"template" => '<span>
+		"title" => "postbit_ratings_result_rating",
+		"template" => '<span class="rating">
 		<img src="{$r[\'image\']}" alt="{$r[\'name\']}" title="{$r[\'name\']}">
 		<span class="rating_name"> {$r[\'name\']}</span> x <strong>{$result[\'amount\']}</strong>
 	</span>
 </span>'
 	], [
-		"title" => "postbit_ratingscontrol",
-		"template" => '<a href="#" onclick="return RatePost(\'{$post[\'pid\']}\', \'{$r[\'rid\']}\', \'{$securitytoken}\')">
+		"title" => "postbit_ratings_result",
+		"template" => '<div class="post_ratings_result{$compress} float_left" onclick="return RatingList(\'{$pid}\');">
+	{$ratings_result}
+</div>'
+	], [
+		"title" => "postbit_ratings_control",
+		"template" => '<a class="rating" href="#" onclick="return RatePost(\'{$post[\'pid\']}\', \'{$r[\'rid\']}\', \'{$securitytoken}\')">
 	<img src="{$r[\'image\']}" alt="{$r[\'name\']}" title="{$r[\'name\']}">
 </a>'
 	], [
-		"title" => "postbit_ratingslist",
+		"title" => "postbit_ratings_list",
 		"template" => '<div class="rating">
 		<img src="{$r[\'image\']}" alt="{$r[\'name\']}" title="{$r[\'name\']}">
-		<span class="rating_name">{$r[\'name\']}</span> x <strong>{$result[\'COUNT(rid)\']}</strong>
+		<span class="rating_name">{$r[\'name\']}</span> x <strong>{$result[\'amount\']}</strong>
+		<div>{$users_tmp}</div>
 </div>'
-	], [
-		"title" => "forumdisplay_oprating",
-		"template" => '<td align="center" class="{$bgcolor}{$thread_type_class}" id="rating_table_{$thread[\'tid\']}">
-	<img src="{$r[\'image\']}" alt="{$r[\'name\']}" title="{$r[\'name\']}"> x <strong>{$result[\'COUNT(rid)\']}</strong>
-</td>'
-	], [
-		"title" => "forumdisplay_oprating_none",
-		"template" => '<td align="center" class="{$bgcolor}{$thread_type_class}" id="rating_table_{$thread[\'tid\']}">-</td>'
-	], [
-		"title" => "header_menu_ratingslog",
-		"template" => '<li><a style="background-image: url(images/star.png);" href="{$mybb->settings[\'bburl\']}/ratingslog.php">Ratings Log</a></li>'
 	]];
 }
 
 function post_ratings_activate() {
 	global $db, $mybb;
 	require_once MYBB_ROOT."inc/adminfunctions_templates.php";
-	find_replace_templatesets(
-		"header",
-		"#".preg_quote('{$menu_calendar}')."#i",
-		'{$menu_ratingslog}{$menu_calendar}'
-	);
 	find_replace_templatesets(
 		"postbit",
 		"#".preg_quote('<div class="post_controls">')."#i",
@@ -189,10 +180,6 @@ function post_ratings_activate() {
 		"postbit_classic",
 		"#".preg_quote('<div class="post_controls">')."#i",
 		'{$post[\'ratings\']}<div class="post_controls">'
-	);
-	find_replace_templatesets(
-		"member_profile", "#".preg_quote('{$profilefields}')."#i",
-		'{$profilefields}{$ratings_profile_block}'
 	);
 	
 	$post_ratings_templates = post_ratings_templates();
@@ -206,17 +193,88 @@ function post_ratings_activate() {
 			"dateline" => time()
 		] );
 	}
+	$stylesheet =
+'.oprating {
+	white-space: nowrap;
+	color: #999;
+	font-size: 11px;
+}
+
+.post_ratings_result img {
+	vertical-align: middle;
+	position: relative;
+	top: -1px;
+} .post_ratings_result {
+	color: #999;
+	clear: both;
+	font-size: 11px;
+	font-weight: 400;
+	white-space: nowrap;
+	position: relative;
+	margin-left: 10px;
+    cursor: pointer;
+} .post_ratings_result > .rating:not( :last-child ) {
+	margin-right: 6px;
+}
+
+.post_ratings_list {
+	display: none;
+	clear: both;
+    float: left;
+	margin: 6px 9px;
+	color: #333;
+	background: #f5f5f5;
+	border: 1px solid black;
+	border-radius: 4px;
+	max-width: 600px;
+    max-height: 600px;
+	overflow-y: auto;
+} .post_ratings_list .rating {
+	padding: 6px;
+} .post_ratings_list .rating:not( :last-child ) {
+	margin-bottom: 6px;
+	border-bottom: 1px solid black;
+} .post_ratings_list .rating a span:hover {
+	text-decoration: underline;
+} .post_ratings_list .rating span {
+	display: inline-block;
+	margin-bottom: 2px;
+} .post_ratings_list .rating span img {
+	float: left;
+	margin-right: 4px;
+}
+
+.post_ratings_control {
+    margin-right: 10px;
+} .post_ratings_control > .rating {
+	text-decoration: none;
+	opacity: 0.2;
+	transition: opacity .25s ease-in-out;
+	-moz-transition: opacity .25s ease-in-out;
+	-webkit-transition: opacity .25s ease-in-out;
+} .post:hover .post_ratings_control > .rating {
+    opacity: 0.5;
+} .post .post_ratings_control > .rating:hover {
+	opacity: 1;
+}';
+	$db->insert_query( "themestylesheets", array(
+		"name" => "post_ratings.css",
+		"tid" => 1,
+		"attachedto" => "",
+		"stylesheet" => $db->escape_string( $stylesheet ),
+		"cachefile" => "post_ratings.css",
+		"lastmodified" => TIME_NOW
+	) );
+	require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
+	cache_stylesheet( 1, "post_ratings.css", $stylesheet );
+	update_theme_stylesheet_list( 1, false, true );
+	
 	change_admin_permission( "config", "post_ratings", 1 );
 }
 
 function post_ratings_deactivate() {
 	global $db, $mybb;
 	require_once MYBB_ROOT.'inc/adminfunctions_templates.php';
-	find_replace_templatesets(
-		"header",
-		"#".preg_quote('{$menu_ratingslog}')."#i",
-		""
-	);
 	find_replace_templatesets(
 		"postbit",
 		"#".preg_quote('{$post[\'ratings\']}')."#i",
@@ -225,10 +283,6 @@ function post_ratings_deactivate() {
 	find_replace_templatesets(
 		"postbit_classic",
 		"#".preg_quote('{$post[\'ratings\']}')."#i",
-		""
-	);
-	find_replace_templatesets(
-		"member_profile", "#".preg_quote('{$ratings_profile_block}')."#i",
 		""
 	);
 	
@@ -243,6 +297,13 @@ function post_ratings_deactivate() {
 		}
 	}
 	$db->delete_query( "templates", "title IN (".$titles.") AND sid='-1'" );
+	$db->delete_query( "themestylesheets", "name='post_ratings.css'" );
+	$query = $db->simple_select( "themes", "tid" );
+	while( $tid = $db->fetch_field($query, "tid") ) {
+		@unlink( MYBB_ROOT."cache/themes/theme{$tid}/post_ratings.css" );
+	}
+	require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
+	update_theme_stylesheet_list( 1, false, true );
 	change_admin_permission( "config", "post_ratings", 0 );
 }
 
@@ -308,14 +369,13 @@ $plugins->add_hook( "showthread_start", "post_ratings_resources" );
 function post_ratings_resources() {
 	global $mybb, $headerinclude;
 	$ver = post_ratings_info()["version"];
-	$headerinclude .= '<link type="text/css" rel="stylesheet" href="'.$mybb->settings["bburl"].'/inc/plugins/post_ratings/ratings.css?ver='.$ver.'">
-<script type="text/javascript" src="'.$mybb->settings["bburl"].'/inc/plugins/post_ratings/ratings.js?ver='.$ver.'"></script>';
+	$headerinclude .= '<script type="text/javascript" src="'.$mybb->settings["bburl"].'/jscripts/post_ratings.js?ver='.$ver.'"></script>';
 }
 
 $plugins->add_hook( "forumdisplay_thread_end", "post_ratings_forumthread" );
 function post_ratings_forumthread() {
 	global $db, $mybb, $templates, $thread, $rating, $bgcolor, $thread_type_class;
-	$query = $db->simple_select( "postratings", "rid,COUNT(rid)", "pid='".$thread["firstpost"]."' GROUP BY rid ORDER BY COUNT(rid) DESC" );
+	$query = $db->simple_select( "postratings", "rid,COUNT(rid) as amount", "pid='".$thread["firstpost"]."' GROUP BY rid ORDER BY amount DESC" );
 	$result = $db->fetch_array( $query );
 	if ( $result ) {
 		$r = get_rating( $result["rid"] );
@@ -371,9 +431,9 @@ function post_ratings_threadstart() {
 	if ( $where != "" ) {
 		$where .= ")";
 		$query = $db->write_query(
-			"SELECT r.rid, r.pid, COUNT(r.rid) as amount, rd.disporder FROM ".TABLE_PREFIX."postratings r LEFT JOIN
-			".TABLE_PREFIX."postratings_rates rd ON ( rd.rid=r.rid )
-			WHERE ".$where." GROUP BY r.pid,r.rid ORDER BY COUNT(r.rid) DESC,rd.disporder,r.date"
+			"SELECT r.rid, r.pid, COUNT(r.rid) AS amount, rd.disporder FROM ".TABLE_PREFIX."postratings r
+            LEFT JOIN ".TABLE_PREFIX."postratings_rates rd ON rd.rid = r.rid
+			WHERE ".$where." GROUP BY r.pid,r.rid ORDER BY amount DESC,rd.disporder,r.date"
 		);
 		while ( $result=$db->fetch_array($query) ) {
 			if ( !isset($post_ratings_page[$result["pid"]]) ) {
@@ -390,14 +450,14 @@ function post_ratings_threadend() {
 	$ratethread = "";
 }
 
-function get_post_ratings( $pid ) {
+function get_post_ratings( $pid, $ajax=false ) {
 	global $db, $mybb, $templates, $post_ratings_page;
-	if ( $mybb->input["action"] == "postrate" ) {
+	if ( $ajax ) {
 		$post_ratings_page = array();
 		$query = $db->write_query(
-			"SELECT r.rid, r.pid, COUNT(r.rid) as amount, rd.disporder FROM ".TABLE_PREFIX."postratings r LEFT JOIN
-			".TABLE_PREFIX."postratings_rates rd ON ( rd.rid=r.rid )
-			WHERE pid='".$pid."' GROUP BY r.pid,r.rid ORDER BY r.pid,COUNT(r.rid) DESC,rd.disporder,r.date"
+			"SELECT r.rid, r.pid, COUNT(r.rid) AS amount, rd.disporder FROM ".TABLE_PREFIX."postratings r
+			LEFT JOIN ".TABLE_PREFIX."postratings_rates rd ON rd.rid = r.rid
+			WHERE pid='".$pid."' GROUP BY r.rid ORDER BY amount DESC,rd.disporder,r.date"
 		);
 		while ( $result=$db->fetch_array($query) ) {
 			if ( !isset($post_ratings_page[$result["pid"]]) ) {
@@ -414,10 +474,10 @@ function get_post_ratings( $pid ) {
 	if ( is_array($post_ratings_page[$pid]) ) {
 		foreach( $post_ratings_page[$pid] as $result ) {
 			$r = get_rating( $result["rid"] );
-			eval( "\$ratings_result .= \"".$templates->get("postbit_ratingsresult_rating")."\";" );
+			eval( "\$ratings_result .= \"".$templates->get("postbit_ratings_result_rating")."\";" );
 		}
 	}
-	return eval( "return \"".$templates->get("postbit_ratingsresult")."\";" );
+	return eval( "return \"".$templates->get("postbit_ratings_result")."\";" );
 }
 
 $plugins->add_hook( "postbit", "post_ratings_postbit" );
@@ -433,7 +493,7 @@ function post_ratings_postbit( &$post ) {
 				continue;
 			}
 			$securitytoken = md5( $post["pid"].$r["rid"].$mybb->user["loginkey"] );
-			eval( "\$post['ratings_control'] .= \"".$templates->get("postbit_ratingscontrol")."\";" );
+			eval( "\$post['ratings_control'] .= \"".$templates->get("postbit_ratings_control")."\";" );
 		}
 	}
 	eval( "\$post['ratings'] = \"".$templates->get("postbit_ratings")."\";" );
@@ -480,7 +540,7 @@ function post_ratings_xmlhttp() {
 		if ( !$query ) {
 			die( json_encode(array("error", "Failed to add rating!")) );
 		}
-		die( json_encode(array("ok", get_post_ratings($pid))) );
+		die( json_encode(array("ok", get_post_ratings($pid, true))) );
 	} elseif ( $mybb->input["action"] == "postlist" ) {
 		$pid = (int)$mybb->input["pid"];
 		if ( $pid <= 0 ) {
@@ -497,9 +557,9 @@ function post_ratings_xmlhttp() {
 			die( json_encode(array("error", "You cannot view the ratings for this post!")) );
 		}
 		$query = $db->write_query(
-			"SELECT r.rid, GROUP_CONCAT(r.uid ORDER BY r.date) as uid_list, COUNT(r.rid) FROM ".TABLE_PREFIX."postratings r LEFT JOIN
-			".TABLE_PREFIX."postratings_rates rd ON ( rd.rid=r.rid )
-			WHERE pid='$pid' GROUP BY r.rid ORDER BY COUNT(r.rid) DESC,rd.disporder"
+			"SELECT r.rid, r.pid, COUNT(r.rid) AS amount, GROUP_CONCAT(r.uid ORDER BY r.date) as uid_list FROM ".TABLE_PREFIX."postratings r
+			LEFT JOIN ".TABLE_PREFIX."postratings_rates rd ON rd.rid = r.rid
+			WHERE pid='".$pid."' GROUP BY r.rid ORDER BY amount DESC,rd.disporder,r.date"
 		);
 		if ( !$query ) {
 			die( json_encode(array("error", "Failed to get ratings!")) );
@@ -514,153 +574,10 @@ function post_ratings_xmlhttp() {
 			}
 			$r = get_rating( $result["rid"] );
 			// todo: fix this
-			eval( "\$tmp .= \"".$templates->get("postbit_ratingslist")."\";" );
+			eval( "\$tmp .= \"".$templates->get("postbit_ratings_list")."\";" );
 		}
-		die( json_encode(array("ok", $tmp, get_post_ratings($pid))) );
+		die( json_encode(array("ok", $tmp, get_post_ratings($pid, true))) );
 	}
-}
-
-$plugins->add_hook( "member_profile_start", "post_ratings_user_profile" );
-function post_ratings_user_profile() {
-	global $db, $mybb, $headerinclude, $taken, $given, $ratings_profile_block;
-	// todo: move css
-	$headerinclude .= "<style>
-		.rating {
-			list-style: outside none none;
-			padding: 4px;
-			text-align: left;
-		} .rating img {
-			vertical-align: middle;
-			position: relative;
-			top: -1px;
-		}
-	</style>";
-	$uid = $mybb->input["uid"];
-	if ( empty($uid) and $mybb->user["uid"] ) {
-		$uid = $mybb->user["uid"];
-	} elseif ( empty($uid) ) {
-		return;
-	}
-	$query = $db->write_query( "SELECT COUNT(rid) as count, rid FROM ".TABLE_PREFIX."postratings r
-		LEFT JOIN ".TABLE_PREFIX."posts p ON (r.pid=p.pid)
-		LEFT JOIN ".TABLE_PREFIX."users pu ON (p.uid=pu.uid)
-		WHERE p.visible=1 AND pu.uid=".$uid." GROUP BY rid ORDER BY count DESC,rid"
-	);
-	$taken_arr = array();
-	while ( $result=$db->fetch_array($query) ) {
-		$taken_arr[ $result["rid"] ] = $result["count"];
-	}
-	foreach( get_ratings() as $r ) {
-		if ( !$taken_arr[$r["rid"]] and $r["active"] ) {
-			$taken_arr[ $r["rid"] ] = 0;
-		}
-	}
-	
-	// todo: move to template
-	$taken = "";
-	foreach( $taken_arr as $rid => $count ) {
-		$r = get_rating( $rid );
-		$taken .= '<li class="rating">
-			<span>
-				<img src="'.$r["image"].'" alt="'.$r["name"].'" title="'.$r["name"].'">
-				<strong>'.$count.'</strong> x <span class="rating_name"> '.$r["name"].'</span>
-			</span>
-		</li>';
-	}
-	
-	$query = $db->write_query( "SELECT COUNT(rid) as count, rid FROM ".TABLE_PREFIX."postratings r
-		LEFT JOIN ".TABLE_PREFIX."posts p ON (r.pid=p.pid)
-		WHERE p.visible=1 AND r.uid=".$uid." GROUP BY rid ORDER BY count DESC,rid"
-	);
-	$given_arr = array();
-	while ( $result=$db->fetch_array($query) ) {
-		$given_arr[ $result["rid"] ] = $result["count"];
-	}
-	foreach( get_ratings() as $r ) {
-		if ( !$given_arr[$r["rid"]] and $r["active"] ) {
-			$given_arr[ $r["rid"] ] = 0;
-		}
-	}
-	
-	// todo: move to template
-	$given = "";
-	foreach( $given_arr as $rid => $count ) {
-		$r = get_rating( $rid );
-		$given .= '<li class="rating">
-			<span>
-				<img src="'.$r["image"].'" alt="'.$r["name"].'" title="'.$r["name"].'">
-				<strong>'.$count.'</strong> x <span class="rating_name"> '.$r["name"].'</span>
-			</span>
-		</li>';
-	}
-	
-	// todo: move to template
-	$ratings_profile_block = '<table class="tborder tfixed" border="0" cellpadding="5" cellspacing="0">
-		<colgroup>
-			<col style="width: 50%;">
-		</colgroup>
-		<tbody>
-			<tr>
-				<td colspan="2" class="thead"><strong>Rating Stats</strong></td>
-			</tr>
-			<tr>
-				<td class="trow1" style="text-align: center;">
-					<a href="ratingslog.php?rated='.$uid.'">Was Rated:</a><div><ul style="display: inline-block; margin: 0px; margin-top: 4px; padding: 0px;">
-						'.$taken.'
-					</ul></div>
-				</td>
-				<td class="trow1" style="text-align: center;">
-					<a href="ratingslog.php?rater='.$uid.'">Gave Ratings:</a><div><ul style="display: inline-block; margin: 0px; margin-top: 4px; padding: 0px;">
-						'.$given.'
-					</ul></div>
-				</td>
-			</tr>
-		</tbody>
-	</table>';
-}
-
-$plugins->add_hook( "global_start", "post_ratingslog_button" );
-function post_ratingslog_button() {
-	global $mybb, $templates, $menu_ratingslog;
-	if ( $mybb->user["uid"] > 0 ) {
-		$menu_ratingslog = $templates->get("postbit_ratings");
-		eval( "\$menu_ratingslog = \"".$templates->get("header_menu_ratingslog")."\";" );
-	}
-}
-
-$plugins->add_hook( "fetch_wol_activity_end", "post_ratingslog_fetch_wol_activity" );
-function post_ratingslog_fetch_wol_activity( $user_activity ) {
-	global $db, $mybb, $lang, $parameters, $uid_list;
-	$location = ltrim( $user_activity["location"], "/" );
-	if ( strpos($location, "ratingslog.php") === 0 ) {
-		$user_activity["activity"] = "ratingslog";
-		$parameters["rated"] = (int)$parameters["rated"] or 0;
-		$parameters["rater"] = (int)$parameters["rater"] or 0;
-		if ( $parameters["rated"] > 0 ) {
-			$uid_list[ $parameters["rated"] ] = $parameters["rated"];
-			$user_activity["rated"] = $parameters["rated"];
-		} elseif ( $parameters["rater"] > 0 ) {
-			$uid_list[ $parameters["rater"] ] = $parameters["rater"];
-			$user_activity["rater"] = $parameters["rater"];
-		}
-	}
-	return $user_activity;
-}
-
-$plugins->add_hook( "build_friendly_wol_location_end", "post_ratingslog_friendly_location" );
-function post_ratingslog_friendly_location( &$plugin_array ) {
-	global $db, $mybb, $lang, $usernames;
-	$user_activity = $plugin_array["user_activity"];
-	if ( $user_activity["activity"] == "ratingslog" ) {
-		if ( !empty($usernames[$user_activity["rated"]]) ) {
-			$plugin_array["location_name"] = 'Viewing <a href="ratingslog.php?rated='.$user_activity["rater"].'">Received Ratings</a> for <a href="'.get_profile_link($user_activity["rated"]).'">'.$usernames[$user_activity["rated"]].'</a>';
-		} elseif ( !empty($usernames[$user_activity["rater"]]) ) {
-			$plugin_array["location_name"] = 'Viewing <a href="ratingslog.php?rater='.$user_activity["rater"].'">Given Ratings</a> for <a href="'.get_profile_link($user_activity["rater"]).'">'.$usernames[$user_activity["rater"]].'</a>';
-		} else {
-			$plugin_array["location_name"] = 'Viewing <a href="ratingslog.php">Ratings Log</a>';
-		}
-	}
-	return $plugin_array;
 }
 
 $plugins->add_hook( "admin_config_menu", "post_ratings_cfg_menu" );
