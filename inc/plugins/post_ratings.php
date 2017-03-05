@@ -212,18 +212,20 @@ function post_ratings_activate() {
 	white-space: nowrap;
 	position: relative;
 	margin-left: 10px;
+	margin-bottom: 2px;
+	min-width: 100px;
 	cursor: pointer;
-} .post.classic .post_ratings_result {
-	margin-left: 145px;
-} .post_ratings_result > .rating:not( :last-child ) {
+} .post_ratings_result > .rating:not( :last-child ) {
 	margin-right: 6px;
 }
 
 .post_ratings_list {
 	display: none;
-	clear: both;
-	float: left;
-	margin: 6px 9px;
+	clear: left;
+	margin-left: 9px;
+	margin-right: 9px;
+	margin-top: 0px;
+	margin-bottom: 6px;
 	color: #333;
 	background: #f5f5f5;
 	border: 1px solid black;
@@ -231,8 +233,8 @@ function post_ratings_activate() {
 	max-width: 600px;
 	max-height: 600px;
 	overflow-y: auto;
-} .post.classic .post_ratings_list {
-	margin-left: 144px;
+} .post_ratings_list img[alt=\'Loading...\'] {
+	padding: 6px;
 } .post_ratings_list .rating {
 	padding: 6px;
 } .post_ratings_list .rating:not( :last-child ) {
@@ -248,17 +250,27 @@ function post_ratings_activate() {
 	margin-bottom: 2px;
 }
 
+.post.classic .post_ratings_result, .post.classic .post_ratings_list {
+	margin-left: 18.8%;
+}
+
 .post_ratings_control {
+	font: bold 11px Tahoma,Calibri,Verdana,Geneva,sans-serif;
+	white-space: nowrap;
 	margin-right: 10px;
-} .post_ratings_control > .rating {
+	min-height: 18px;
+} .post_ratings_control > .rating, .post_ratings_control > .text {
 	text-decoration: none;
 	opacity: 0.2;
 	transition: opacity .25s ease-in-out;
 	-moz-transition: opacity .25s ease-in-out;
 	-webkit-transition: opacity .25s ease-in-out;
-} .post:hover .post_ratings_control > .rating {
+} .post_ratings_control > .text {
+	position: relative;
+	top: 2px;
+} .post:hover .post_ratings_control > .rating, .post:hover .post_ratings_control > .text {
 	opacity: 0.5;
-} .post .post_ratings_control > .rating:hover {
+} .post .post_ratings_control > .rating:hover, .post .post_ratings_control > .text:hover {
 	opacity: 1;
 }';
 	$db->insert_query( "themestylesheets", array(
@@ -378,15 +390,32 @@ function post_ratings_resources() {
 
 $plugins->add_hook( "forumdisplay_thread_end", "post_ratings_forumthread" );
 function post_ratings_forumthread() {
-	global $db, $mybb, $templates, $thread, $rating, $bgcolor, $thread_type_class;
-	$query = $db->simple_select( "postratings", "rid,COUNT(rid) as amount", "pid='".$thread["firstpost"]."' GROUP BY rid ORDER BY amount DESC" );
-	$result = $db->fetch_array( $query );
-	if ( $result ) {
-		$r = get_rating( $result["rid"] );
-		eval( "\$rating = \"".$templates->get("forumdisplay_oprating")."\";" );
-	} else {
-		eval( "\$rating = \"".$templates->get("forumdisplay_oprating_none")."\";" );
+	global $db, $mybb, $templates, $thread, $foruminfo, $fpermissions, $rating, $bgcolor, $thread_type_class;
+	if ( $mybb->settings['allowthreadratings'] != 0 && $foruminfo['allowtratings'] != 0 && $fpermissions['canviewthreads'] != 0 ) {
+		$query = $db->write_query(
+			"SELECT r.rid, r.pid, COUNT(r.rid) AS amount, rd.disporder FROM ".TABLE_PREFIX."postratings r
+			LEFT JOIN ".TABLE_PREFIX."postratings_rates rd ON rd.rid = r.rid
+			WHERE pid='".$thread["firstpost"]."' GROUP BY r.rid ORDER BY amount DESC,rd.disporder,r.date LIMIT 1"
+		);
+		$result = $db->fetch_array( $query );
+		if ( $result ) {
+			$r = get_rating( $result["rid"] );
+			eval( "\$rating = \"".$templates->get("forumdisplay_oprating")."\";" );
+		} else {
+			eval( "\$rating = \"".$templates->get("forumdisplay_oprating_none")."\";" );
+		}
 	}
+}
+
+$plugins->add_hook( "showthread_end", "post_ratings_threadend" );
+function post_ratings_threadend() {
+	global $ratethread;
+	$ratethread = "";
+}
+
+$plugins->add_hook( "ratethread_start", "post_ratings_ratethread" );
+function post_ratings_ratethread() {
+	error_no_permission();
 }
 
 global $post_ratings_page;
@@ -446,12 +475,6 @@ function post_ratings_threadstart() {
 			array_push( $post_ratings_page[$result["pid"]], $result );
 		}
 	}
-}
-
-$plugins->add_hook( "showthread_end", "post_ratings_threadend" );
-function post_ratings_threadend() {
-	global $ratethread;
-	$ratethread = "";
 }
 
 function get_post_ratings( $pid, $ajax=false ) {

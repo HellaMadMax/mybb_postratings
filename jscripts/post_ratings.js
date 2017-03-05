@@ -2,7 +2,7 @@ function RatePost( pid, rid, securitytoken ) {
 	$( "#post_"+pid+" .post_ratings_control" ).html( '<img title="Loading..." alt="Loading..." src="images/spinner.gif">' );
 	$.post( "xmlhttp.php", {"action": "postrate", pid: pid, rid: rid, securitytoken: securitytoken}, function( data ) {
 		if ( data[0] == "ok" ) {
-			$( "#post_"+pid+" .post_ratings_control" ).html( "Rated!" );
+			$( "#post_"+pid+" .post_ratings_control" ).html( '<span class="text">Rated!</span>' );
 			if ( data[1] ) {
 				$( "#post_"+pid+" .post_ratings_result" )[0].outerHTML = data[1];
 				if ( $("#post_"+pid+" .post_ratings_list:visible")[0] ) {
@@ -25,7 +25,7 @@ function RatingList( pid, force ) {
 	}
 	
 	if ( !force ) {
-		$( "#post_"+pid+" .post_ratings_result" )[0].outerHTML += '<div class="post_ratings_list" style="display: none;"></div>';
+		$( "#post_"+pid+" .post_ratings" ).append( '<div class="post_ratings_list float_left" style="display: none;"></div>' );
 	}
 	$( "#post_"+pid+" .post_ratings_list" ).html( '<img title="Loading..." alt="Loading..." src="images/spinner.gif">' );
 	$( "#post_"+pid+" .post_ratings_list" ).show( "fast" );
