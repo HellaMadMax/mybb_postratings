@@ -8,20 +8,20 @@ function post_ratings_info() {
 		"description"	=> "Adds post ratings",
 		"website"		=> "",
 		"author"		=> "HellaMadMax",
-		"authorsite"	=> "https://hellamad.ga",
-		"version"		=> "0.3",
+		"authorsite"	=> "https://gitlab.com/HellaMadMax",
+		"version"		=> "0.4",
 		"compatibility" => "18*"
 	);
 }
 
 function post_ratings_rates_recache() {
-    global $db, $cache;
-    $query = $db->simple_select( "postratings_rates", "*", "", array("order_by" => "disporder, rid") );
-    $rates = array();
-    while( $result=$db->fetch_array($query) ) {
+	global $db, $cache;
+	$query = $db->simple_select( "postratings_rates", "*", "", array("order_by" => "disporder, rid") );
+	$rates = array();
+	while( $result=$db->fetch_array($query) ) {
 		$rates[ $result["rid"] ] = $result;
-    }
-    $cache->update( "postratings_rates", $rates );
+	}
+	$cache->update( "postratings_rates", $rates );
 }
 
 function post_ratings_install() {
@@ -136,7 +136,7 @@ function post_ratings_templates() {
 	], [
 		"title" => "postbit_ratings",
 		"template" => '<div class="post_ratings">
-    {$post[\'ratings_result\']}
+	{$post[\'ratings_result\']}
 	<div class="post_ratings_control float_right">
 		{$post[\'ratings_control\']}
 	</div>
@@ -212,23 +212,27 @@ function post_ratings_activate() {
 	white-space: nowrap;
 	position: relative;
 	margin-left: 10px;
-    cursor: pointer;
-} .post_ratings_result > .rating:not( :last-child ) {
+	cursor: pointer;
+} .post.classic .post_ratings_result {
+	margin-left: 145px;
+} .post_ratings_result > .rating:not( :last-child ) {
 	margin-right: 6px;
 }
 
 .post_ratings_list {
 	display: none;
 	clear: both;
-    float: left;
+	float: left;
 	margin: 6px 9px;
 	color: #333;
 	background: #f5f5f5;
 	border: 1px solid black;
 	border-radius: 4px;
 	max-width: 600px;
-    max-height: 600px;
+	max-height: 600px;
 	overflow-y: auto;
+} .post.classic .post_ratings_list {
+	margin-left: 144px;
 } .post_ratings_list .rating {
 	padding: 6px;
 } .post_ratings_list .rating:not( :last-child ) {
@@ -236,16 +240,16 @@ function post_ratings_activate() {
 	border-bottom: 1px solid black;
 } .post_ratings_list .rating a span:hover {
 	text-decoration: underline;
-} .post_ratings_list .rating span {
-	display: inline-block;
-	margin-bottom: 2px;
 } .post_ratings_list .rating span img {
 	float: left;
 	margin-right: 4px;
+} .post_ratings_list .rating span {
+	display: inline-block;
+	margin-bottom: 2px;
 }
 
 .post_ratings_control {
-    margin-right: 10px;
+	margin-right: 10px;
 } .post_ratings_control > .rating {
 	text-decoration: none;
 	opacity: 0.2;
@@ -253,7 +257,7 @@ function post_ratings_activate() {
 	-moz-transition: opacity .25s ease-in-out;
 	-webkit-transition: opacity .25s ease-in-out;
 } .post:hover .post_ratings_control > .rating {
-    opacity: 0.5;
+	opacity: 0.5;
 } .post .post_ratings_control > .rating:hover {
 	opacity: 1;
 }';
@@ -432,7 +436,7 @@ function post_ratings_threadstart() {
 		$where .= ")";
 		$query = $db->write_query(
 			"SELECT r.rid, r.pid, COUNT(r.rid) AS amount, rd.disporder FROM ".TABLE_PREFIX."postratings r
-            LEFT JOIN ".TABLE_PREFIX."postratings_rates rd ON rd.rid = r.rid
+			LEFT JOIN ".TABLE_PREFIX."postratings_rates rd ON rd.rid = r.rid
 			WHERE ".$where." GROUP BY r.pid,r.rid ORDER BY amount DESC,rd.disporder,r.date"
 		);
 		while ( $result=$db->fetch_array($query) ) {
@@ -487,7 +491,7 @@ function post_ratings_postbit( &$post ) {
 		return;
 	}
 	$post["ratings_result"] = get_post_ratings( $post["pid"] );
-	if ( $post["visible"] == 1 ) {//$mybb->user["uid"] != $post["uid"] and 
+	if ( $post["visible"] == 1 and $mybb->user["uid"] != $post["uid"] ) {
 		foreach( get_ratings() as $r ) {
 			if ( !can_use_rating($r["rid"], $post)[0] ) {
 				continue;
@@ -521,7 +525,7 @@ function post_ratings_xmlhttp() {
 			die( json_encode(array("error", "Invalid Post!")) );
 		}
 		if ( $mybb->user["uid"] == $post["uid"] ) {
-			//die( json_encode(array("error", "You cannot rate yourself!")) );
+			die( json_encode(array("error", "You cannot rate yourself!")) );
 		}
 		$check = can_use_rating( $rid, $post );
 		if ( !$check[0] ) {
@@ -573,7 +577,6 @@ function post_ratings_xmlhttp() {
 				$users_tmp .= build_profile_link( format_name($user["username"], $user["usergroup"], $user["displaygroup"]), $user["uid"] );
 			}
 			$r = get_rating( $result["rid"] );
-			// todo: fix this
 			eval( "\$tmp .= \"".$templates->get("postbit_ratings_list")."\";" );
 		}
 		die( json_encode(array("ok", $tmp, get_post_ratings($pid, true))) );

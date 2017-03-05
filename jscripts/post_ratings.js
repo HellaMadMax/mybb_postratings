@@ -34,11 +34,11 @@ function RatingList( pid, force ) {
 			$( "#post_"+pid+" .post_ratings_list" ).html( data[1] );
 			$( "#post_"+pid+" .post_ratings_list" ).show( "fast" );
 		} else {
-            $( "#post_"+pid+" .post_ratings_list" ).remove();
-        }
+			$( "#post_"+pid+" .post_ratings_list" ).remove();
+		}
 		if ( data[2] ) {
-            $( "#post_"+pid+" .post_ratings_result" )[0].outerHTML = data[2];
-        }
+			$( "#post_"+pid+" .post_ratings_result" )[0].outerHTML = data[2];
+		}
 	}, "json" );
 	return false;
 }
