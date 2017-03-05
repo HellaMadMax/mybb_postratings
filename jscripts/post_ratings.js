@@ -34,7 +34,7 @@ function RatingList( pid, force ) {
 			if ( data[0] == "ok" ) {
 				$( "#post_"+pid+" .post_ratings_list" ).html( data[1] );
 			} else {
-				$( "#post_"+pid+" .post_ratings_list" ).html( '<span class="text">'+data[1]+'</span>' );
+				$( "#post_"+pid+" .post_ratings_list" ).html( '<div class="text">'+data[1]+'</div>' );
 			}
 			$( "#post_"+pid+" .post_ratings_list" ).show( "fast" );
 		} else {

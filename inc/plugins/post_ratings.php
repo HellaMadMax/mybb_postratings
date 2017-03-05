@@ -233,9 +233,7 @@ function post_ratings_activate() {
 	max-width: 600px;
 	max-height: 600px;
 	overflow-y: auto;
-} .post_ratings_list img[alt=\'Loading...\'] {
-	padding: 6px;
-} .post_ratings_list .rating {
+} .post_ratings_list .rating, .post_ratings_list img[alt=\'Loading...\'], .post_ratings_list .text {
 	padding: 6px;
 } .post_ratings_list .rating:not( :last-child ) {
 	margin-bottom: 6px;
