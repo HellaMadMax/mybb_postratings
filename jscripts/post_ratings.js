@@ -12,7 +12,7 @@ function RatePost( pid, rid, securitytoken ) {
 				}
 			}
 		} else {
-			$( "#post_"+pid+" .post_ratings_control" ).html( data[1] );
+			$( "#post_"+pid+" .post_ratings_control" ).html( '<span class="text">'+data[1]+'</span>' );
 		}
 	}, "json" );
 	return false;
@@ -31,7 +31,11 @@ function RatingList( pid, force ) {
 	$( "#post_"+pid+" .post_ratings_list" ).show( "fast" );
 	$.post( "xmlhttp.php", {"action": "postlist", pid: pid}, function( data ) {
 		if ( data[1] ) {
-			$( "#post_"+pid+" .post_ratings_list" ).html( data[1] );
+			if ( data[0] == "ok" ) {
+				$( "#post_"+pid+" .post_ratings_list" ).html( data[1] );
+			} else {
+				$( "#post_"+pid+" .post_ratings_list" ).html( '<span class="text">'+data[1]+'</span>' );
+			}
 			$( "#post_"+pid+" .post_ratings_list" ).show( "fast" );
 		} else {
 			$( "#post_"+pid+" .post_ratings_list" ).remove();
