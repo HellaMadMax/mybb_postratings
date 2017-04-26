@@ -115,13 +115,14 @@ function post_ratings_is_installed() {
 }
 
 function post_ratings_uninstall() {
-	global $db;
+	global $db, $cache;
 	if ( $db->table_exists("postratings") ) {
 		$db->drop_table( "postratings" );
 	}
 	if ( $db->table_exists("postratings_rates") ) {
 		$db->drop_table( "postratings_rates" );
 	}
+	$cache->delete( "postratings_rates" );
 }
 
 function post_ratings_templates() {
@@ -171,6 +172,11 @@ function post_ratings_templates() {
 function post_ratings_activate() {
 	global $db, $mybb;
 	require_once MYBB_ROOT."inc/adminfunctions_templates.php";
+	find_replace_templatesets(
+		"header",
+		"#".preg_quote('{$menu_calendar}')."#i",
+		'{$menu_ratingslog}{$menu_calendar}'
+	);
 	find_replace_templatesets(
 		"postbit",
 		"#".preg_quote('<div class="post_controls">')."#i",
@@ -270,6 +276,23 @@ function post_ratings_activate() {
 	opacity: 0.5;
 } .post .post_ratings_control > .rating:hover, .post .post_ratings_control > .text:hover {
 	opacity: 1;
+}
+
+#logo ul.top_links a.ratingslog {
+	background-image: url(images/star.png);
+}
+
+#ratingslog tbody tr td {
+	padding: 8px;
+} #ratingslog tbody tr.rating td.time {
+	width: 74px;
+	border-right: 1px solid rgb(110, 110, 110);
+} #ratingslog tbody tr.rating td img {
+	vertical-align: middle;
+	position: relative;
+	top: -2px;
+} #ratingslog tbody tr.rating td strong.name {
+	text-shadow: 1px 1px black;
 }';
 	$db->insert_query( "themestylesheets", array(
 		"name" => "post_ratings.css",
@@ -289,6 +312,11 @@ function post_ratings_activate() {
 function post_ratings_deactivate() {
 	global $db, $mybb;
 	require_once MYBB_ROOT.'inc/adminfunctions_templates.php';
+	find_replace_templatesets(
+		"header",
+		"#".preg_quote('{$menu_ratingslog}')."#i",
+		""
+	);
 	find_replace_templatesets(
 		"postbit",
 		"#".preg_quote('{$post[\'ratings\']}')."#i",
@@ -602,6 +630,25 @@ function post_ratings_xmlhttp() {
 		}
 		die( json_encode(array("ok", $tmp, get_post_ratings($pid, true))) );
 	}
+}
+
+$plugins->add_hook( "global_start", "post_ratingslog_button" );
+function post_ratingslog_button() {
+	global $mybb, $menu_ratingslog;
+	if ( $mybb->user["uid"] > 0 ) {
+		$menu_ratingslog = '<li><a href="'.$mybb->settings["bburl"].'/ratingslog.php" class="ratingslog">Ratings Log</a></li>';
+	}
+}
+
+$plugins->add_hook( "build_friendly_wol_location_end", "post_ratingslog_friendly_location" );
+function post_ratingslog_friendly_location( &$plugin_array ) {
+	global $db, $mybb, $lang, $usernames;
+	$user_activity = $plugin_array["user_activity"];
+	$location = ltrim( $user_activity["location"], "/" );
+	if ( strpos($location, "ratingslog.php") === 0 ) {
+		$plugin_array["location_name"] = 'Viewing <a href="'.$mybb->settings["bburl"].'/ratingslog.php">Ratings Log</a>';
+	}
+	return $plugin_array;
 }
 
 $plugins->add_hook( "admin_config_menu", "post_ratings_cfg_menu" );
